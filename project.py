@@ -11,14 +11,16 @@ from random import choice
 
 con = sqlite3.connect("antimat.db", check_same_thread=False)
 cur = con.cursor()
-result = cur.execute("""SELECT Noun FROM Antimat""").fetchall()
-cur.execute("""Delete from Users""")
+
+cur.execute("""Update Users
+            SET TASKS = '[]'""")
 con.commit()
 mat_noun = []
 mat_verv = []
 padeshi = ['nomn', 'gent', 'datv', 'accs', 'ablt', 'loct']
 chicla = ['sing', 'plur']
 itog = []
+result = cur.execute("""SELECT Noun FROM Antimat""").fetchall()
 for elem in result:
     mat_noun.append(elem[0])
 result = cur.execute("""SELECT Verb FROM Antimat""").fetchall()
@@ -57,7 +59,7 @@ def human_read_format(size, i=0):
     return f'{size}{d[i]} ({s}) б'
 
 
-def music(update, context):
+def music(update, context, n=0):
     work(update, context)
     try:
         context.bot.send_audio(chat_id=update.message.chat.id, audio=choice(mus))
@@ -65,7 +67,10 @@ def music(update, context):
                                           'Это моя любимая',
                                           'Эту я бы слушала всегда']))
     except telegram.error.BadRequest:
-        music(update, context)
+        if n < 10:
+            music(update, context, n+1)
+            return True
+        update.message.reply_text('Не удалось отправить')
 
 
 def podshet(chast, first, second, third):
@@ -277,11 +282,20 @@ def third_response(update, context):
         photo = open('correct.jpg', 'rb')
         context.bot.sendPhoto(chat_id=update.message.chat.id, photo=photo)
         update.message.reply_text("А ты удивительный...")
-        promote(update, context, chat_id=update.message.chat.id, user_id=update.message.from_user.id)
+        try:
+            promote(update, context, chat_id=update.message.chat.id, user_id=update.message.from_user.id)
+        except telegram.error.BadRequest:
+            update.message.reply_text("Не могу повысить тебя, так как ты уже на вершине... личных сообщений")
         return ConversationHandler.END
-    update.message.reply_text("День не так уж и много, не так ли?")
-    restrict(update, context, chat_id=update.message.chat.id, user_id=update.message.from_user.id)
+    update.message.reply_text("День не так уж и много для осознания своих ошибок, не так ли?")
+    try:
+        update.message.reply_text("Ты бы видел себя user) Маленький ещё)")
+        restrict(update, context, chat_id=update.message.chat.id, user_id=update.message.from_user.id)
+    except telegram.error.BadRequest:
+        update.message.reply_text("Сыграем в молчанку хотя бы на словах?")
     return ConversationHandler.END
+
+
 
 
 def help(update, context):
@@ -528,6 +542,5 @@ def main():
     dp.add_handler(text_handler2)
     updater.start_polling()
     updater.idle()
-
 
 main()
