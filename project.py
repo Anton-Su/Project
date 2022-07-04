@@ -70,7 +70,7 @@ def music(update, context, n=0):
         if n < 10:
             music(update, context, n+1)
             return True
-        update.message.reply_text('Не удалось отправить')
+        update.message.reply_text('Не удалось отправить, вот')
 
 
 def podshet(chast, first, second, third):
